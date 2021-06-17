@@ -2,10 +2,18 @@ import './App.css';
 import Todo from './components/Todo'
 import Form from './components/Form';
 import FilterButton from './components/FilterButton';
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { nanoid } from 'nanoid';
 
-//part filter ni xfaham
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+}
+
+//part filter button (harus diulangkaji)
 const FILTER_MAP = {
   All : () => true,
   Active : task => !task.completed,
@@ -14,7 +22,9 @@ const FILTER_MAP = {
 
 const FILTER_NAMES = Object.keys(FILTER_MAP);
 
-function App(props) {
+function App() {
+  const listHeadingRef = useRef(null)
+
   const [tasks,setTasks] = useState([])
 
   const [filter,setFilter] = useState('All')
@@ -77,8 +87,7 @@ function App(props) {
     setTasks(editedTaskList);
   }
 
-
-  console.log(tasks)
+  // console.log(tasks)
   const taskLists = tasks.filter(FILTER_MAP[filter])
                           .map(task => <Todo name={task.name} id={task.id} completed={task.completed} key={task.id} toggleTaskCompleted={toggleTaskCompleted} deleteTask={deleteTask}
                                         editTask={editTask}/>)
@@ -87,6 +96,15 @@ function App(props) {
   const taskNouns = tasks.length === 1 ? 'task' : 'tasks';
   const headerText = `${taskRemaining} ${taskNouns} remaining`; 
   
+  // const prevTaskLength = usePrevious(tasks.length);
+  const prevTaskLength = usePrevious(tasks.length);
+  
+  useEffect(()=>{
+    if(tasks.length - prevTaskLength === -1){
+      listHeadingRef.current.focus()
+    }
+  },[prevTaskLength,tasks.length])
+
   return (
     <div className="App">
       <h1>Todo Salik</h1>
@@ -94,13 +112,10 @@ function App(props) {
       <Form addTask={addTask} />
 
       <div className="filters btn-group stack-exception">
-        {/* <FilterButton/>
-        <FilterButton/>
-        <FilterButton/> */}
         {filterList}
       </div>
 
-      <h2 id="list-heading">
+      <h2 id="list-heading"  tabIndex="-1" ref={listHeadingRef}>
         {headerText}
       </h2>
 

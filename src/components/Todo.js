@@ -1,8 +1,24 @@
-import React, {useState} from 'react'
+import React, {useState, useRef, useEffect} from 'react'
+
+// hook to get previous ref
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+}
+
 
 function Todo(props) {
     const [isEditing, setEditing] = useState(false)
     const [newName, setNewName] = useState(props.name)
+    
+    // store previous editing state
+    const prevEditingState = usePrevious(isEditing)
+
+    const editFieldRef = useRef(null);
+    const editButtonRef = useRef(null);
 
     function handleSubmit(e){
         e.preventDefault();
@@ -16,7 +32,7 @@ function Todo(props) {
             <label className="todo-label" htmlFor={props.id}>
               New name for {props.name}
             </label>
-            <input id={props.id} className="todo-text" type="text" value={newName} onChange={(e)=>setNewName(e.target.value)}/>
+            <input id={props.id} className="todo-text" type="text" value={newName} onChange={(e)=>setNewName(e.target.value)} ref={editFieldRef} />
           </div>
           <div className="btn-group">
             <button type="button" className="btn todo-cancel" onClick={()=> {setEditing(false)}} >
@@ -44,7 +60,7 @@ function Todo(props) {
               </label>
             </div>
             <div className="btn-group">
-              <button type="button" className="btn" onClick={()=> {setEditing(true)}}>
+              <button type="button" className="btn" onClick={()=> {setEditing(true)}} ref={editButtonRef} >
                 Edit <span className="visually-hidden">{props.name}</span>
               </button>
               <button
@@ -58,29 +74,24 @@ function Todo(props) {
         </div>
       );
 
+    useEffect(()=>{
+      if(!prevEditingState && isEditing){
+        editFieldRef.current.focus();
+      }
+      if(prevEditingState && !isEditing){
+        editButtonRef.current.focus();
+      }
+    }, [prevEditingState, isEditing])
+
+    // pseudocode utk focus management editfield dan editbutton
+    // if(!EditingBefore && isEditingNow){
+    //   editFieldRef.current.focus()
+    // }else if (EditingBefore && !EditingNow){
+    //   editButtonRef.current.focus()
+    // }
+
     // conditional rendering
     return <li className="todo">{isEditing ? editingTemplate : viewTemplate}</li>;
-
-    // return (
-    //     <div>
-    //         <li className="todo stack-small">
-    //         <div className="c-cb">
-    //             <input id={props.id} type="checkbox" defaultChecked={props.completed} onChange={()=> props.toggleTaskCompleted(props.id)} />
-    //             <label className="todo-label" htmlFor={props.id}>
-    //             {props.name}
-    //             </label>
-    //         </div>
-    //         <div className="btn-group">
-    //             <button type="button" className="btn" onClick={()=> {props.editTask(props.id)}}>
-    //             Edit
-    //             </button>
-    //             <button type="button" className="btn btn__danger" onClick={() => props.deleteTask(props.id)}>
-    //             Delete
-    //             </button>
-    //         </div>
-    //         </li>
-    //     </div>
-    // )
 }
 
-export default Todo
+export default Todo;
